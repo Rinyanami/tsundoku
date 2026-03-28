@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar'
 
 export const metadata: Metadata = {
   title: 'Tsundoku · 積ん読',
-  description: 'Track every book you own but haven't read yet — and the ones you have.',
+  description: "Track every book you own but haven't read yet — and the ones you have.",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
