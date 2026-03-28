@@ -3,20 +3,20 @@ import './globals.css'
 import Navbar from '@/components/Navbar'
 
 export const metadata: Metadata = {
-  title: 'Tsundoku · 積ん読',
-  description: "Track every book you own but haven't read yet — and the ones you have.",
+  title: '積ん読 · Tsundoku',
+  description: "记录每一本你拥有的书，以及每一本你读过的书。网文、轻小说、文学、漫画全收录。",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="zh">
       <body>
         <Navbar />
-        <main className="min-h-screen">
-          {children}
-        </main>
-        <footer className="border-t border-border mt-24 py-8 text-center text-faint text-xs font-body tracking-widest uppercase">
-          積ん読 · Tsundoku · {new Date().getFullYear()}
+        <main style={{ minHeight: '100vh' }}>{children}</main>
+        <footer style={{ borderTop: '1px solid #252535', marginTop: 96, padding: '32px 0', textAlign: 'center' }}>
+          <p style={{ fontFamily: 'Noto Sans SC', fontSize: 11, color: '#3a3550', letterSpacing: '0.15em' }}>
+            積ん読 · TSUNDOKU · {new Date().getFullYear()}
+          </p>
         </footer>
       </body>
     </html>

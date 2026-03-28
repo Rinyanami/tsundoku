@@ -5,18 +5,14 @@ import { createClient } from '@/lib/supabase/client'
 import type { GoogleBook } from '@/lib/books'
 
 const STATUSES = [
-  { value: 'want_to_read', label: '想读', en: 'Want to Read' },
-  { value: 'reading', label: '在读', en: 'Reading' },
-  { value: 'completed', label: '读完', en: 'Completed' },
-  { value: 'on_hold', label: '搁置', en: 'On Hold' },
-  { value: 'dropped', label: '抛弃', en: 'Dropped' },
+  { value: 'reading', label: '在读', color: '#c084fc' },
+  { value: 'want_to_read', label: '想读', color: '#7dd3fc' },
+  { value: 'completed', label: '读完', color: '#6ee7a0' },
+  { value: 'on_hold', label: '搁置', color: '#8a82a0' },
+  { value: 'dropped', label: '抛弃', color: '#f87171' },
 ]
 
-interface ShelfButtonProps {
-  book: GoogleBook
-}
-
-export default function ShelfButton({ book }: ShelfButtonProps) {
+export default function ShelfButton({ book }: { book: GoogleBook & { category?: string } }) {
   const [user, setUser] = useState<string | null>(null)
   const [shelfItem, setShelfItem] = useState<{ status: string; rating: number | null } | null>(null)
   const [loading, setLoading] = useState(true)
@@ -30,18 +26,9 @@ export default function ShelfButton({ book }: ShelfButtonProps) {
       const { data } = await supabase.auth.getUser()
       if (!data.user) { setLoading(false); return }
       setUser(data.user.id)
-
-      const { data: item } = await supabase
-        .from('shelf_items')
-        .select('status, rating')
-        .eq('user_id', data.user.id)
-        .eq('book_id', book.id)
-        .single()
-
-      if (item) {
-        setShelfItem(item)
-        setRating(item.rating || 0)
-      }
+      const { data: item } = await supabase.from('shelf_items').select('status, rating')
+        .eq('user_id', data.user.id).eq('book_id', book.id).single()
+      if (item) { setShelfItem(item); setRating(item.rating || 0) }
       setLoading(false)
     }
     init()
@@ -49,14 +36,10 @@ export default function ShelfButton({ book }: ShelfButtonProps) {
 
   const ensureBookCached = async () => {
     await supabase.from('books').upsert({
-      id: book.id,
-      title: book.title,
-      authors: book.authors,
-      description: book.description,
-      thumbnail: book.thumbnail,
-      published_date: book.publishedDate,
-      page_count: book.pageCount,
-      categories: book.categories,
+      id: book.id, title: book.title, authors: book.authors,
+      description: book.description, thumbnail: book.thumbnail,
+      published_date: book.publishedDate, page_count: book.pageCount,
+      categories: book.categories, category: book.category || 'other',
     }, { onConflict: 'id' })
   }
 
@@ -64,109 +47,79 @@ export default function ShelfButton({ book }: ShelfButtonProps) {
     if (!user) { setShowAuthPrompt(true); return }
     setLoading(true)
     await ensureBookCached()
-
     await supabase.from('shelf_items').upsert(
       { user_id: user, book_id: book.id, status, rating: rating || null },
       { onConflict: 'user_id,book_id' }
     )
-
     setShelfItem({ status, rating: rating || null })
-    setOpen(false)
-    setLoading(false)
+    setOpen(false); setLoading(false)
   }
 
-  const updateRating = async (newRating: number) => {
+  const updateRating = async (n: number) => {
     if (!user || !shelfItem) return
-    setRating(newRating)
-    await supabase.from('shelf_items')
-      .update({ rating: newRating })
-      .eq('user_id', user)
-      .eq('book_id', book.id)
-    setShelfItem({ ...shelfItem, rating: newRating })
+    setRating(n)
+    await supabase.from('shelf_items').update({ rating: n }).eq('user_id', user).eq('book_id', book.id)
+    setShelfItem({ ...shelfItem, rating: n })
   }
 
-  const removeFromShelf = async () => {
+  const remove = async () => {
     if (!user) return
-    await supabase.from('shelf_items')
-      .delete()
-      .eq('user_id', user)
-      .eq('book_id', book.id)
-    setShelfItem(null)
-    setRating(0)
-    setOpen(false)
+    await supabase.from('shelf_items').delete().eq('user_id', user).eq('book_id', book.id)
+    setShelfItem(null); setRating(0); setOpen(false)
   }
 
-  if (loading) {
-    return <div className="h-10 w-36 bg-elevated rounded-sm animate-pulse" />
-  }
+  if (loading) return <div style={{ height: 40, width: 140, background: '#1a1a24', borderRadius: 4 }} />
+
+  const current = STATUSES.find(s => s.value === shelfItem?.status)
 
   return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className={shelfItem
-          ? `status-badge status-${shelfItem.status} py-2 px-4 cursor-pointer text-sm`
-          : 'btn-primary'
-        }
-      >
-        {shelfItem
-          ? STATUSES.find(s => s.value === shelfItem.status)?.en || shelfItem.status
-          : '+ Add to Shelf'
-        }
+    <div style={{ position: 'relative' }}>
+      <button onClick={() => setOpen(!open)}
+        style={shelfItem ? {
+          padding: '8px 18px', borderRadius: 4, fontSize: 13, fontFamily: 'Noto Sans SC', fontWeight: 500,
+          background: `${current?.color}18`, border: `1px solid ${current?.color}40`,
+          color: current?.color, cursor: 'pointer', transition: 'all 0.2s',
+        } : undefined}
+        className={shelfItem ? undefined : 'btn-primary'}
+        style={shelfItem ? {
+          padding: '8px 18px', borderRadius: 4, fontSize: 13, fontFamily: 'Noto Sans SC', fontWeight: 500,
+          background: `${current?.color}18`, border: `1px solid ${current?.color}40`,
+          color: current?.color, cursor: 'pointer',
+        } : { fontSize: 14 }}>
+        {shelfItem ? `${current?.label} ▾` : '+ 加入书架'}
       </button>
 
-      {showAuthPrompt && (
-        <p className="mt-2 text-xs text-muted font-body">Sign in to add books to your shelf</p>
-      )}
+      {showAuthPrompt && <p style={{ marginTop: 8, fontSize: 12, color: '#8a82a0', fontFamily: 'Noto Sans SC' }}>请先登录再添加</p>}
 
       {open && (
         <>
-          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-12 bg-elevated border border-border rounded-sm shadow-xl z-40 w-56 py-1">
-            <p className="px-3 py-1.5 text-xs text-faint font-body uppercase tracking-widest border-b border-border mb-1">
-              Set status
-            </p>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 30 }} onClick={() => setOpen(false)} />
+          <div style={{ position: 'absolute', left: 0, top: 48, background: '#1a1a24', border: '1px solid #252535', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', zIndex: 40, width: 200, padding: '6px 0', overflow: 'hidden' }}>
+            <p style={{ padding: '6px 14px', fontSize: 10, color: '#3a3550', fontFamily: 'Noto Sans SC', letterSpacing: '0.1em', borderBottom: '1px solid #252535', marginBottom: 4 }}>设置状态</p>
             {STATUSES.map(s => (
-              <button
-                key={s.value}
-                onClick={() => setStatus(s.value)}
-                className={`w-full text-left px-3 py-2 font-body text-sm transition-colors hover:bg-border flex items-center justify-between
-                  ${shelfItem?.status === s.value ? 'text-accent' : 'text-muted hover:text-text'}`}
-              >
-                <span>{s.en}</span>
-                <span className="text-faint">{s.label}</span>
+              <button key={s.value} onClick={() => setStatus(s.value)}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', transition: 'background 0.15s', fontFamily: 'Noto Sans SC', fontSize: 13 }}
+                className="hover:bg-elevated">
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.color, display: 'block' }} />
+                <span style={{ color: shelfItem?.status === s.value ? s.color : '#8a82a0' }}>{s.label}</span>
               </button>
             ))}
 
             {shelfItem && (
-              <>
-                <div className="border-t border-border mt-1 pt-1 px-3 pb-2">
-                  <p className="text-xs text-faint font-body uppercase tracking-widest mb-2">Rating</p>
-                  <div className="flex gap-1 flex-wrap">
-                    {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                      <button
-                        key={n}
-                        onClick={() => updateRating(n)}
-                        className={`w-7 h-7 text-xs font-body rounded-sm transition-colors
-                          ${rating === n
-                            ? 'bg-accent text-bg'
-                            : 'bg-border text-muted hover:text-text'
-                          }`}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
+              <div style={{ borderTop: '1px solid #252535', marginTop: 4, padding: '10px 14px' }}>
+                <p style={{ fontSize: 10, color: '#3a3550', fontFamily: 'Noto Sans SC', letterSpacing: '0.1em', marginBottom: 8 }}>评分</p>
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                  {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                    <button key={n} onClick={() => updateRating(n)}
+                      style={{ width: 28, height: 28, fontSize: 11, fontFamily: 'Noto Sans SC', borderRadius: 4, border: 'none', cursor: 'pointer', transition: 'all 0.15s', background: rating === n ? '#f0b860' : '#252535', color: rating === n ? '#0d0d12' : '#8a82a0', fontWeight: rating === n ? 600 : 400 }}>
+                      {n}
+                    </button>
+                  ))}
                 </div>
-                <div className="border-t border-border pt-1">
-                  <button
-                    onClick={removeFromShelf}
-                    className="w-full text-left px-3 py-2 font-body text-xs text-faint hover:text-red-400 transition-colors"
-                  >
-                    Remove from shelf
-                  </button>
-                </div>
-              </>
+                <button onClick={remove} style={{ marginTop: 10, width: '100%', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#3a3550', fontFamily: 'Noto Sans SC', textAlign: 'left', padding: '4px 0' }} className="hover:text-red">
+                  从书架移除
+                </button>
+              </div>
             )}
           </div>
         </>

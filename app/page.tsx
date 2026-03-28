@@ -1,97 +1,81 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
-import { searchBooks } from '@/lib/books'
-import { BookGridCard } from '@/components/BookCard'
 
-export default async function Home() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+const CATEGORIES = [
+  { key: 'webnovel', label: '网络小说', desc: '起点、晋江、番茄……', color: '#f0b860' },
+  { key: 'lightnovel', label: '轻小说', desc: '日系、国产轻小说', color: '#c084fc' },
+  { key: 'literature', label: '文学', desc: '经典与当代文学作品', color: '#6ee7a0' },
+  { key: 'manga', label: '漫画', desc: '日漫、国漫、欧美漫画', color: '#7dd3fc' },
+]
 
-  // Featured books — classic literature
-  const featured = await searchBooks('subject:classics fiction', 8)
-
+export default function Home() {
   return (
     <div className="max-w-6xl mx-auto px-4">
 
       {/* Hero */}
-      <section className="pt-24 pb-20 relative">
-        <div className="absolute inset-0 -z-10 pointer-events-none">
-          <div className="absolute top-12 left-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-accent/3 rounded-full blur-3xl" />
+      <section className="pt-20 pb-16 relative overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          <div className="grid-bg absolute inset-0" />
+          <div style={{ position: 'absolute', top: -100, right: -100, width: 600, height: 600, background: 'radial-gradient(circle, rgba(192,132,252,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: -50, left: -50, width: 400, height: 400, background: 'radial-gradient(circle, rgba(240,184,96,0.04) 0%, transparent 70%)', pointerEvents: 'none' }} />
         </div>
 
-        <div className="max-w-2xl">
-          <p className="font-body text-xs text-accent uppercase tracking-[0.3em] mb-4">
-            積ん読 · Tsundoku
-          </p>
-          <h1 className="font-display text-6xl md:text-7xl text-text leading-[1.05] mb-6">
-            Every book<br />
-            <em className="text-accent">you've ever owned</em><br />
-            deserves a record.
+        <div className="max-w-2xl relative">
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(192,132,252,0.08)', border: '1px solid rgba(192,132,252,0.2)', borderRadius: 99, padding: '4px 14px', marginBottom: 24 }}>
+            <span style={{ width: 6, height: 6, background: '#c084fc', borderRadius: '50%', display: 'block', boxShadow: '0 0 6px #c084fc' }} />
+            <span style={{ fontSize: 11, color: '#c084fc', fontFamily: 'Noto Sans SC', letterSpacing: '0.1em' }}>積ん読 · TSUNDOKU</span>
+          </div>
+
+          <h1 style={{ fontFamily: 'Noto Serif SC', fontSize: 52, fontWeight: 300, lineHeight: 1.15, color: '#e8e0f0', marginBottom: 20 }}>
+            每一本书<br />
+            <span style={{ color: '#c084fc' }}>都值得被记录</span>
           </h1>
-          <p className="font-body text-base text-muted leading-relaxed mb-10 max-w-lg">
-            Track what you've read, what you're reading, and that ever-growing pile
-            of books you swore you'd get to. Discover what to read next with AI.
+          <p style={{ fontFamily: 'Noto Sans SC', fontSize: 15, color: '#8a82a0', lineHeight: 1.8, maxWidth: 480, marginBottom: 32 }}>
+            追踪你的网文进度、轻小说书架、文学收藏。社区评分、短评、标签，打造属于书迷的 Bangumi。
           </p>
 
-          <div className="flex items-center gap-3 flex-wrap">
-            <Link href="/search" className="btn-primary">
-              Find a book
-            </Link>
-            {!user && (
-              <Link href="/search" className="btn-ghost">
-                Browse without signing in
-              </Link>
-            )}
-            {user && (
-              <Link href="/shelf" className="btn-ghost">
-                Go to my shelf →
-              </Link>
-            )}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <Link href="/search" className="btn-primary" style={{ fontSize: 14 }}>开始搜书</Link>
+            <Link href="/browse" className="btn-ghost" style={{ fontSize: 14 }}>按分类浏览 →</Link>
           </div>
         </div>
       </section>
 
-      {/* Divider */}
-      <div className="border-t border-border mb-16" />
-
-      {/* Featured */}
-      <section>
-        <div className="flex items-baseline justify-between mb-8">
-          <div>
-            <h2 className="font-display text-2xl text-text">Classics to start with</h2>
-            <p className="font-body text-sm text-muted mt-0.5">Timeless reads worth tracking</p>
-          </div>
-          <Link href="/search" className="font-body text-sm text-accent hover:text-accent-hover transition-colors">
-            Search all →
-          </Link>
+      {/* Category cards */}
+      <section style={{ marginBottom: 64 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 20 }}>
+          <h2 style={{ fontFamily: 'Noto Serif SC', fontSize: 20, color: '#e8e0f0' }}>按分类浏览</h2>
+          <Link href="/browse" style={{ fontSize: 13, color: '#c084fc', fontFamily: 'Noto Sans SC' }}>全部分类 →</Link>
         </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-5">
-          {featured.slice(0, 8).map(book => (
-            <BookGridCard key={book.id} book={book} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          {CATEGORIES.map(cat => (
+            <Link key={cat.key} href={`/browse?category=${cat.key}`}
+              style={{ background: '#13131a', border: '1px solid #252535', borderRadius: 8, padding: '20px 18px', display: 'block', transition: 'border-color 0.2s, transform 0.2s', textDecoration: 'none' }}
+              className="hover:border-accent group">
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: `${cat.color}18`, border: `1px solid ${cat.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                <span style={{ fontSize: 14, color: cat.color }}>
+                  {cat.key === 'webnovel' ? '文' : cat.key === 'lightnovel' ? 'ラ' : cat.key === 'literature' ? '典' : '漫'}
+                </span>
+              </div>
+              <p style={{ fontFamily: 'Noto Sans SC', fontSize: 14, fontWeight: 500, color: '#e8e0f0', marginBottom: 4 }}>{cat.label}</p>
+              <p style={{ fontFamily: 'Noto Sans SC', fontSize: 12, color: '#8a82a0' }}>{cat.desc}</p>
+            </Link>
           ))}
         </div>
       </section>
 
-      {/* AI Feature callout */}
-      <section className="mt-24 mb-4">
-        <div className="border border-border rounded-sm p-8 md:p-12 relative overflow-hidden">
-          <div className="absolute inset-0 -z-10">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl" />
-          </div>
-          <div className="max-w-lg">
-            <p className="font-body text-xs text-accent uppercase tracking-widest mb-3">AI-powered</p>
-            <h3 className="font-display text-3xl text-text mb-3">
-              Not sure what to read next?
-            </h3>
-            <p className="font-body text-sm text-muted leading-relaxed mb-6">
-              Tell our AI what you loved (or didn't), and it'll suggest your next read —
-              no algorithm, just taste.
+      {/* AI feature */}
+      <section style={{ marginBottom: 64 }}>
+        <div style={{ background: '#13131a', border: '1px solid #252535', borderRadius: 12, padding: '40px 48px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: -60, right: -60, width: 300, height: 300, background: 'radial-gradient(circle, rgba(192,132,252,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'relative' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(192,132,252,0.08)', border: '1px solid rgba(192,132,252,0.2)', borderRadius: 99, padding: '3px 12px', marginBottom: 16 }}>
+              <span style={{ fontSize: 10, color: '#c084fc', fontFamily: 'Noto Sans SC', letterSpacing: '0.1em' }}>✦ AI 推荐</span>
+            </div>
+            <h3 style={{ fontFamily: 'Noto Serif SC', fontSize: 26, color: '#e8e0f0', marginBottom: 10 }}>不知道读什么？</h3>
+            <p style={{ fontFamily: 'Noto Sans SC', fontSize: 14, color: '#8a82a0', lineHeight: 1.8, maxWidth: 420, marginBottom: 24 }}>
+              把你的书架交给 AI，它会根据你的品味推荐下一本——不是算法，是真正的鉴赏力。
             </p>
-            <Link href="/shelf" className="btn-primary">
-              Get a recommendation
-            </Link>
+            <Link href="/shelf" className="btn-primary" style={{ fontSize: 14 }}>去我的书架</Link>
           </div>
         </div>
       </section>
