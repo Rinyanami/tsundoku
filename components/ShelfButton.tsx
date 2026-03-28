@@ -72,20 +72,19 @@ export default function ShelfButton({ book }: { book: GoogleBook & { category?: 
 
   const current = STATUSES.find(s => s.value === shelfItem?.status)
 
+  const buttonStyle = shelfItem ? {
+    padding: '8px 18px', borderRadius: 4, fontSize: 13, fontFamily: 'Noto Sans SC', fontWeight: 500,
+    background: `${current?.color}18`, border: `1px solid ${current?.color}40`,
+    color: current?.color, cursor: 'pointer', transition: 'all 0.2s',
+  } : {
+    padding: '10px 20px', borderRadius: 4, fontSize: 14, fontFamily: 'Noto Sans SC', fontWeight: 500,
+    background: 'linear-gradient(135deg, #c084fc, #a855f7)', color: '#0d0d12',
+    border: 'none', cursor: 'pointer', boxShadow: '0 0 20px rgba(192,132,252,0.3)',
+  }
+
   return (
     <div style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(!open)}
-        style={shelfItem ? {
-          padding: '8px 18px', borderRadius: 4, fontSize: 13, fontFamily: 'Noto Sans SC', fontWeight: 500,
-          background: `${current?.color}18`, border: `1px solid ${current?.color}40`,
-          color: current?.color, cursor: 'pointer', transition: 'all 0.2s',
-        } : undefined}
-        className={shelfItem ? undefined : 'btn-primary'}
-        style={shelfItem ? {
-          padding: '8px 18px', borderRadius: 4, fontSize: 13, fontFamily: 'Noto Sans SC', fontWeight: 500,
-          background: `${current?.color}18`, border: `1px solid ${current?.color}40`,
-          color: current?.color, cursor: 'pointer',
-        } : { fontSize: 14 }}>
+      <button onClick={() => setOpen(!open)} style={buttonStyle}>
         {shelfItem ? `${current?.label} ▾` : '+ 加入书架'}
       </button>
 
@@ -94,14 +93,14 @@ export default function ShelfButton({ book }: { book: GoogleBook & { category?: 
       {open && (
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: 30 }} onClick={() => setOpen(false)} />
-          <div style={{ position: 'absolute', left: 0, top: 48, background: '#1a1a24', border: '1px solid #252535', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', zIndex: 40, width: 200, padding: '6px 0', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', left: 0, top: 48, background: '#1a1a24', border: '1px solid #252535', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', zIndex: 40, width: 200, padding: '6px 0' }}>
             <p style={{ padding: '6px 14px', fontSize: 10, color: '#3a3550', fontFamily: 'Noto Sans SC', letterSpacing: '0.1em', borderBottom: '1px solid #252535', marginBottom: 4 }}>设置状态</p>
             {STATUSES.map(s => (
               <button key={s.value} onClick={() => setStatus(s.value)}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', transition: 'background 0.15s', fontFamily: 'Noto Sans SC', fontSize: 13 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Noto Sans SC', fontSize: 13, color: shelfItem?.status === s.value ? s.color : '#8a82a0' }}
                 className="hover:bg-elevated">
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.color, display: 'block' }} />
-                <span style={{ color: shelfItem?.status === s.value ? s.color : '#8a82a0' }}>{s.label}</span>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.color, display: 'block', flexShrink: 0 }} />
+                {s.label}
               </button>
             ))}
 
@@ -111,12 +110,12 @@ export default function ShelfButton({ book }: { book: GoogleBook & { category?: 
                 <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                   {[1,2,3,4,5,6,7,8,9,10].map(n => (
                     <button key={n} onClick={() => updateRating(n)}
-                      style={{ width: 28, height: 28, fontSize: 11, fontFamily: 'Noto Sans SC', borderRadius: 4, border: 'none', cursor: 'pointer', transition: 'all 0.15s', background: rating === n ? '#f0b860' : '#252535', color: rating === n ? '#0d0d12' : '#8a82a0', fontWeight: rating === n ? 600 : 400 }}>
+                      style={{ width: 28, height: 28, fontSize: 11, fontFamily: 'Noto Sans SC', borderRadius: 4, border: 'none', cursor: 'pointer', background: rating === n ? '#f0b860' : '#252535', color: rating === n ? '#0d0d12' : '#8a82a0', fontWeight: rating === n ? 600 : 400 }}>
                       {n}
                     </button>
                   ))}
                 </div>
-                <button onClick={remove} style={{ marginTop: 10, width: '100%', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#3a3550', fontFamily: 'Noto Sans SC', textAlign: 'left', padding: '4px 0' }} className="hover:text-red">
+                <button onClick={remove} style={{ marginTop: 10, width: '100%', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#3a3550', fontFamily: 'Noto Sans SC', textAlign: 'left', padding: '4px 0' }}>
                   从书架移除
                 </button>
               </div>
